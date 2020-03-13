@@ -7,6 +7,8 @@ import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.edgetype.StreetWithElevationEdge;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.graph.Vertex;
+import org.opentripplanner.routing.vertextype.OsmVertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,6 +93,10 @@ public class GraphCsvExporter {
         printEdgeStats();
         exportEdgesToCsv();
         edgeWriter.close();
+
+        printNodeStats();
+        exportNodesToCsv();
+        nodeWriter.close();
     }
 
     public void printEdgeStats() {
@@ -123,9 +129,7 @@ public class GraphCsvExporter {
     }
 
     public void exportEdgesToCsv() {
-
         LOG.info("Writing edges to file...");
-
         // Write column names as the first row
         String[] record = {"id", "name", "nodeOrigId", "nodeDestId", "length", "edgeClass", "streetClass", "permission", "bikeSafetyFactor", "geometry"};
         try {
@@ -133,7 +137,6 @@ public class GraphCsvExporter {
         } catch (IOException ioe) {
             LOG.error("Exception while creating CSV");
         }
-
         // Write edges of the graph one by one
         int writeCount = 0;
         for (Edge edge : graph.getEdges()) {
@@ -164,14 +167,61 @@ public class GraphCsvExporter {
                 LOG.error("Exception while writing CSV, exiting");
                 System.exit(1);
             }
-
-            if (writeCount > 5) {
-                break;
-            }
         }
         LOG.info("Wrote {} edges to file: {}", writeCount, outPathEdges);
         if (writeCount < graph.getEdges().size()) {
             LOG.warn("Did not write all edges to file, missing: {} edges", graph.getEdges().size()-writeCount);
+        }
+    }
+
+    public void printNodeStats() {
+        LOG.info("Count nodes by type...");
+        Map<String, Integer> classCounts = new HashMap<>();
+        for (Vertex vertex : graph.getVertices()) {
+            String vertexClass = vertex.getClass().getSimpleName();
+            int count = classCounts.containsKey(vertexClass) ? classCounts.get(vertexClass) : 0;
+            classCounts.put(vertexClass, count + 1);
+        }
+        for (Map.Entry<String, Integer> entry : classCounts.entrySet()) {
+            LOG.info(entry.getKey() + " count: " + entry.getValue());
+        }
+    }
+
+    public void exportNodesToCsv() {
+        LOG.info("Writing nodes to file...");
+        // Write column names as the first row
+        String[] record = {"id", "name", "label", "trafficLight", "freeFlowing", "geometry", "x", "y"};
+        try {
+            nodeWriter.writeRecord(record);
+        } catch (IOException ioe) {
+            LOG.error("Exception while creating CSV");
+        }
+        // Write nodes (vertices) of the graph one by one
+        int writeCount = 0;
+        for (Vertex vertex : graph.getVertices()) {
+            String id = String.valueOf(vertex.getIndex());
+            String trafficLight = "false";
+            String freeFlowing = "";
+            String coord_x = String.valueOf(vertex.getCoordinate().x);
+            String coord_y = String.valueOf(vertex.getCoordinate().y);
+            String geometry = "POINT ("+ coord_x + " "+ coord_y +")";
+            if (vertex instanceof OsmVertex) {
+                OsmVertex osmVertex = (OsmVertex) vertex;
+                trafficLight = String.valueOf(osmVertex.trafficLight);
+                freeFlowing = String.valueOf(osmVertex.freeFlowing);
+            }
+            record = new String[]{id, vertex.getName(), vertex.getLabel(), trafficLight, freeFlowing, geometry, coord_x, coord_y};
+            try {
+                nodeWriter.writeRecord(record);
+                writeCount += 1;
+            } catch (IOException iow) {
+                LOG.error("Exception while writing CSV, exiting");
+                System.exit(1);
+            }
+        }
+        LOG.info("Wrote {} nodes to file: {}", writeCount, outPathNodes);
+        if (writeCount < graph.getVertices().size()) {
+            LOG.warn("Did not write all nodes to file, missing {} nodes", graph.getVertices().size()-writeCount);
         }
     }
 }
