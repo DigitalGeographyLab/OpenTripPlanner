@@ -156,10 +156,8 @@ public class GraphCsvExporter {
                 bikeSafetyFactor = String.valueOf(streetEdge.getBicycleSafetyFactor());
             }
             String geometry = String.valueOf(edge.getGeometry());
-
             // Prepare the record (CSV row) to write
             record = new String[]{id, name, nodeOrigId, nodeDestId, length, edgeClass, streetClass, permission, bikeSafetyFactor, geometry};
-
             try {
                 edgeWriter.writeRecord(record);
                 writeCount += 1;
@@ -202,15 +200,15 @@ public class GraphCsvExporter {
             String id = String.valueOf(vertex.getIndex());
             String trafficLight = "false";
             String freeFlowing = "";
-            String coord_x = String.valueOf(vertex.getCoordinate().x);
-            String coord_y = String.valueOf(vertex.getCoordinate().y);
-            String geometry = "POINT ("+ coord_x + " "+ coord_y +")";
             if (vertex instanceof OsmVertex) {
                 OsmVertex osmVertex = (OsmVertex) vertex;
                 trafficLight = String.valueOf(osmVertex.trafficLight);
                 freeFlowing = String.valueOf(osmVertex.freeFlowing);
             }
-            record = new String[]{id, vertex.getName(), vertex.getLabel(), trafficLight, freeFlowing, geometry, coord_x, coord_y};
+            String coord_x = String.valueOf(vertex.getCoordinate().x);
+            String coord_y = String.valueOf(vertex.getCoordinate().y);
+            String geometry = "POINT ("+ coord_x + " "+ coord_y +")";
+            record = new String[]{id, vertex.getName(), vertex.getLabel(), trafficLight, freeFlowing, coord_x, coord_y, geometry};
             try {
                 nodeWriter.writeRecord(record);
                 writeCount += 1;
