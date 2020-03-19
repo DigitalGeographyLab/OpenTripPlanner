@@ -188,7 +188,7 @@ public class GraphCsvExporter {
     public void exportNodesToCsv() {
         LOG.info("Writing nodes to file...");
         // Write column names as the first row
-        String[] record = {"id", "name", "label", "trafficLight", "freeFlowing", "geometry", "x", "y"};
+        String[] record = {"id", "name", "label", "trafficLight", "freeFlowing", "x", "y", "geometry"};
         try {
             nodeWriter.writeRecord(record);
         } catch (IOException ioe) {
