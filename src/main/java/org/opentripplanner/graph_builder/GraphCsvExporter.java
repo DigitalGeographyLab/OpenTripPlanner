@@ -3,11 +3,14 @@ package org.opentripplanner.graph_builder;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.csvreader.CsvWriter;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.StreetEdge;
+import org.opentripplanner.routing.edgetype.StreetTraversalPermission;
 import org.opentripplanner.routing.edgetype.StreetWithElevationEdge;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
+import org.opentripplanner.routing.vertextype.BarrierVertex;
 import org.opentripplanner.routing.vertextype.OsmVertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,7 +134,7 @@ public class GraphCsvExporter {
     public void exportEdgesToCsv() {
         LOG.info("Writing edges to file...");
         // Write column names as the first row
-        String[] record = {"id", "name", "nodeOrigId", "nodeDestId", "length", "edgeClass", "streetClass", "permission", "bikeSafetyFactor", "geometry"};
+        String[] record = {"id", "name", "nodeOrigId", "nodeDestId", "length", "edgeClass", "streetClass", "permission", "allows_walking", "allows_biking", "traversable_walking", "traversable_biking", "bikeSafetyFactor", "geometry"};
         try {
             edgeWriter.writeRecord(record);
         } catch (IOException ioe) {
@@ -148,16 +151,25 @@ public class GraphCsvExporter {
             String edgeClass = edge.getClass().getSimpleName();
             String streetClass = "";
             String permission = "";
+            String allowsWalking = "True";
+            String allowsBiking = "True";
+            String traversableWalking = "True";
+            String traversableBiking = "True";
             String bikeSafetyFactor = "";
             if (edge instanceof StreetEdge) {
                 StreetEdge streetEdge = (StreetEdge) edge;
                 streetClass = String.valueOf(streetEdge.getStreetClass());
-                permission = String.valueOf(streetEdge.getPermission());
+                StreetTraversalPermission traversalPermission = streetEdge.getPermission();
+                permission = String.valueOf(traversalPermission);
+                allowsWalking = traversalPermission.allows(TraverseMode.WALK) ? "True" : "False";
+                allowsBiking = traversalPermission.allows(TraverseMode.BICYCLE) ? "True" : "False";
+                traversableWalking = streetEdge.canTraverseIncludingBarrier(TraverseMode.WALK) ? "True" : "False";
+                traversableBiking = streetEdge.canTraverseIncludingBarrier(TraverseMode.BICYCLE) ? "True" : "False";
                 bikeSafetyFactor = String.valueOf(streetEdge.getBicycleSafetyFactor());
             }
             String geometry = String.valueOf(edge.getGeometry());
             // Prepare the record (CSV row) to write
-            record = new String[]{id, name, nodeOrigId, nodeDestId, length, edgeClass, streetClass, permission, bikeSafetyFactor, geometry};
+            record = new String[]{id, name, nodeOrigId, nodeDestId, length, edgeClass, streetClass, permission, allowsWalking, allowsBiking, traversableWalking, traversableBiking, bikeSafetyFactor, geometry};
             try {
                 edgeWriter.writeRecord(record);
                 writeCount += 1;
@@ -188,7 +200,7 @@ public class GraphCsvExporter {
     public void exportNodesToCsv() {
         LOG.info("Writing nodes to file...");
         // Write column names as the first row
-        String[] record = {"id", "name", "label", "trafficLight", "freeFlowing", "x", "y", "geometry"};
+        String[] record = {"id", "name", "vertexClass", "traversable_walking", "traversable_biking", "label", "trafficLight", "freeFlowing", "x", "y", "geometry"};
         try {
             nodeWriter.writeRecord(record);
         } catch (IOException ioe) {
@@ -197,18 +209,29 @@ public class GraphCsvExporter {
         // Write nodes (vertices) of the graph one by one
         int writeCount = 0;
         for (Vertex vertex : graph.getVertices()) {
+            // basic attributes
             String id = String.valueOf(vertex.getIndex());
-            String trafficLight = "false";
+            String vertexClass = vertex.getClass().getSimpleName();
+            String trafficLight = "False";
             String freeFlowing = "";
             if (vertex instanceof OsmVertex) {
                 OsmVertex osmVertex = (OsmVertex) vertex;
-                trafficLight = String.valueOf(osmVertex.trafficLight);
-                freeFlowing = String.valueOf(osmVertex.freeFlowing);
+                trafficLight = osmVertex.trafficLight ? "True" : "False";
+                freeFlowing = osmVertex.freeFlowing ? "True" : "False";
             }
-            String coord_x = String.valueOf(vertex.getCoordinate().x);
-            String coord_y = String.valueOf(vertex.getCoordinate().y);
-            String geometry = "POINT ("+ coord_x + " "+ coord_y +")";
-            record = new String[]{id, vertex.getName(), vertex.getLabel(), trafficLight, freeFlowing, coord_x, coord_y, geometry};
+            // permissions
+            String traversableWalking = "True";
+            String traversableBiking = "True";
+            if (vertex instanceof BarrierVertex) {
+                BarrierVertex barrierVertex = (BarrierVertex) vertex;
+                traversableWalking = barrierVertex.getBarrierPermissions().allows(TraverseMode.WALK) ? "True" : "False";
+                traversableBiking = barrierVertex.getBarrierPermissions().allows(TraverseMode.BICYCLE) ? "True" : "False";
+            }
+            // geometry
+            String coordX = String.valueOf(vertex.getCoordinate().x);
+            String coordY = String.valueOf(vertex.getCoordinate().y);
+            String geometry = "POINT ("+ coordX + " "+ coordY +")";
+            record = new String[]{id, vertex.getName(), vertexClass, traversableWalking, traversableBiking, vertex.getLabel(), trafficLight, freeFlowing, coordX, coordY, geometry};
             try {
                 nodeWriter.writeRecord(record);
                 writeCount += 1;
