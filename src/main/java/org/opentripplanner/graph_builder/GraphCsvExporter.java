@@ -134,7 +134,7 @@ public class GraphCsvExporter {
     public void exportEdgesToCsv() {
         LOG.info("Writing edges to file...");
         // Write column names as the first row
-        String[] record = {"id", "name", "nodeOrigId", "nodeDestId", "length", "edgeClass", "streetClass", "permission", "allows_walking", "allows_biking", "traversable_walking", "traversable_biking", "bikeSafetyFactor", "geometry"};
+        String[] record = {"id", "name", "nodeOrigId", "nodeDestId", "length", "edgeClass", "streetClass", "is_stairs", "is_no_thru_traffic", "permission", "allows_walking", "allows_biking", "traversable_walking", "traversable_biking", "bikeSafetyFactor", "geometry"};
         try {
             edgeWriter.writeRecord(record);
         } catch (IOException ioe) {
@@ -150,6 +150,8 @@ public class GraphCsvExporter {
             String length = String.valueOf(edge.getDistance());
             String edgeClass = edge.getClass().getSimpleName();
             String streetClass = "";
+            String isStairs = "False";
+            String isNoThruTraffic = "False";
             String permission = "";
             String allowsWalking = "True";
             String allowsBiking = "True";
@@ -159,6 +161,8 @@ public class GraphCsvExporter {
             if (edge instanceof StreetEdge) {
                 StreetEdge streetEdge = (StreetEdge) edge;
                 streetClass = String.valueOf(streetEdge.getStreetClass());
+                isStairs = streetEdge.isStairs() ? "True" : "False";
+                isNoThruTraffic = streetEdge.isNoThruTraffic() ? "True" : "False";
                 StreetTraversalPermission traversalPermission = streetEdge.getPermission();
                 permission = String.valueOf(traversalPermission);
                 allowsWalking = traversalPermission.allows(TraverseMode.WALK) ? "True" : "False";
@@ -169,7 +173,7 @@ public class GraphCsvExporter {
             }
             String geometry = String.valueOf(edge.getGeometry());
             // Prepare the record (CSV row) to write
-            record = new String[]{id, name, nodeOrigId, nodeDestId, length, edgeClass, streetClass, permission, allowsWalking, allowsBiking, traversableWalking, traversableBiking, bikeSafetyFactor, geometry};
+            record = new String[]{id, name, nodeOrigId, nodeDestId, length, edgeClass, streetClass, isStairs, isNoThruTraffic, permission, allowsWalking, allowsBiking, traversableWalking, traversableBiking, bikeSafetyFactor, geometry};
             try {
                 edgeWriter.writeRecord(record);
                 writeCount += 1;
