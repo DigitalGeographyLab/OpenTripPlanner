@@ -134,7 +134,7 @@ public class GraphCsvExporter {
     public void exportEdgesToCsv() {
         LOG.info("Writing edges to file...");
         // Write column names as the first row
-        String[] record = {"id", "name", "nodeOrigId", "nodeDestId", "length", "edgeClass", "streetClass", "is_stairs", "is_no_thru_traffic", "permission", "allows_walking", "allows_biking", "traversable_walking", "traversable_biking", "bikeSafetyFactor", "geometry"};
+        String[] record = {"id_otp", "name_otp", "node_orig_id", "node_dest_id", "length", "edge_class", "street_class", "is_stairs", "is_no_thru_traffic", "permission", "allows_walking", "allows_biking", "traversable_walking", "traversable_biking", "bike_safety_factor", "geometry"};
         try {
             edgeWriter.writeRecord(record);
         } catch (IOException ioe) {
@@ -204,7 +204,7 @@ public class GraphCsvExporter {
     public void exportNodesToCsv() {
         LOG.info("Writing nodes to file...");
         // Write column names as the first row
-        String[] record = {"id", "name", "vertexClass", "traversable_walking", "traversable_biking", "label", "trafficLight", "freeFlowing", "x", "y", "geometry"};
+        String[] record = {"id_otp", "name_otp", "vertex_class", "traversable_walking", "traversable_biking", "label", "traffic_light", "free_flowing", "x", "y", "geometry"};
         try {
             nodeWriter.writeRecord(record);
         } catch (IOException ioe) {
