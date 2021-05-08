@@ -17,6 +17,7 @@ import org.opentripplanner.graph_builder.module.ned.NEDGridCoverageFactoryImpl;
 import org.opentripplanner.graph_builder.module.osm.OpenStreetMapModule;
 import org.opentripplanner.graph_builder.services.DefaultStreetEdgeFactory;
 import org.opentripplanner.graph_builder.services.GraphBuilderModule;
+import org.opentripplanner.graph_builder.services.GraphCsvExport;
 import org.opentripplanner.graph_builder.services.ned.ElevationGridCoverageFactory;
 import org.opentripplanner.openstreetmap.impl.AnyFileBasedOpenStreetMapProviderImpl;
 import org.opentripplanner.openstreetmap.services.OpenStreetMapProvider;
@@ -148,6 +149,8 @@ public class GraphBuilder implements Runnable {
         if (serializeGraph) {
             try {
                 graph.save(graphFile);
+                GraphCsvExport.exportEdgesToCsv(graph, "graphs/edges.csv");
+                GraphCsvExport.exportNodesToCsv(graph, "graphs/nodes.csv");
             } catch (Exception ex) {
                 throw new IllegalStateException(ex);
             }
