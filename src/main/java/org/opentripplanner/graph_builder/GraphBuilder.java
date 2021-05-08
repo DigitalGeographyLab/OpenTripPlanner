@@ -149,8 +149,9 @@ public class GraphBuilder implements Runnable {
         if (serializeGraph) {
             try {
                 graph.save(graphFile);
-                GraphCsvExport.exportEdgesToCsv(graph, "graphs/edges.csv");
-                GraphCsvExport.exportNodesToCsv(graph, "graphs/nodes.csv");
+                String basePath = graphFile.getAbsolutePath().replace("/./", "/");
+                GraphCsvExport.exportEdgesToCsv(graph, basePath.replace("Graph.obj", "edges.csv"));
+                GraphCsvExport.exportNodesToCsv(graph, basePath.replace("Graph.obj", "nodes.csv"));
             } catch (Exception ex) {
                 throw new IllegalStateException(ex);
             }
